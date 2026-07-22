@@ -144,6 +144,14 @@ class PassengerDashboardState extends State<PassengerDashboard>
     return _formatDate(_returnDate!);
   }
 
+  void _swapLocations() {
+    setState(() {
+      final temp = _fromCity;
+      _fromCity = _toCity;
+      _toCity = temp;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
@@ -300,6 +308,7 @@ class PassengerDashboardState extends State<PassengerDashboard>
   Widget _buildOtherTab(int index) {
     if (index == 1) return const PassengerMyBookingPage();
     if (index == 2) return const PassengerProfilePage();
+    if (index == 3) return const PassengerProfilePage();
     return const SizedBox.shrink();
   }
 
@@ -418,7 +427,7 @@ class PassengerDashboardState extends State<PassengerDashboard>
         // ─── Floating GPS / Zoom Controls (Middle Right) ───
         Positioned(
           right: 16,
-          top: MediaQuery.of(context).size.height * 0.28,
+          top: MediaQuery.of(context).padding.top + 74,
           child: Column(
             children: [
               // GPS Button
@@ -566,9 +575,9 @@ class PassengerDashboardState extends State<PassengerDashboard>
             child: Container(
               width: 40,
               height: 5,
-              margin: const EdgeInsets.only(bottom: 10),
+              margin: const EdgeInsets.only(bottom: 14),
               decoration: BoxDecoration(
-                color: const Color(0xFF64748B),
+                color: const Color(0xFFCBD5E1),
                 borderRadius: BorderRadius.circular(2.5),
               ),
             ),
@@ -586,70 +595,159 @@ class PassengerDashboardState extends State<PassengerDashboard>
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Pickup Row
-                        GestureDetector(
-                          onTap: () => _openLocationPage(isPickup: true),
-                          behavior: HitTestBehavior.opaque,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.directions_walk_rounded,
-                                  color: Color(0xFF0F172A),
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    _fromCity.isNotEmpty ? _fromCity : 'Select pickup',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 14,
-                                      fontWeight: _fromCity.isNotEmpty ? FontWeight.w600 : FontWeight.w500,
-                                      color: _fromCity.isNotEmpty ? const Color(0xFF0F172A) : const Color(0xFF94A3B8),
+                        // ─── Pickup & Destination Card ───
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: const Color(0xFFE5E5E5), width: 1),
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Pickup Row
+                                  GestureDetector(
+                                    onTap: () => _openLocationPage(isPickup: true),
+                                    behavior: HitTestBehavior.opaque,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(top: 14, bottom: 18, left: 14, right: 14),
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.directions_walk_rounded,
+                                            color: Color(0xFF1E293B),
+                                            size: 26,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'Pickup',
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: const Color(0xFF16A34A),
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 2),
+                                                Text(
+                                                  _fromCity.isNotEmpty ? _fromCity : 'Select pickup',
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 15,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: _fromCity.isNotEmpty
+                                                        ? const Color(0xFF0F172A)
+                                                        : const Color(0xFF94A3B8),
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          const Icon(
+                                            Icons.chevron_right,
+                                            color: Color(0xFFAAAAAA),
+                                            size: 24,
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        // Divider
-                        Container(
-                          height: 1,
-                          color: const Color(0xFFF1F5F9),
-                        ),
-                        // Destination Row
-                        GestureDetector(
-                          onTap: () => _openLocationPage(isPickup: false),
-                          behavior: HitTestBehavior.opaque,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.sports_score_rounded,
-                                  color: Color(0xFF0F172A),
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    _toCity.isNotEmpty ? _toCity : 'Select destination',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 14,
-                                      fontWeight: _toCity.isNotEmpty ? FontWeight.w600 : FontWeight.w500,
-                                      color: _toCity.isNotEmpty ? const Color(0xFF0F172A) : const Color(0xFF94A3B8),
+                                  const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
+                                  // Destination Row
+                                  GestureDetector(
+                                    onTap: () => _openLocationPage(isPickup: false),
+                                    behavior: HitTestBehavior.opaque,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(top: 18, bottom: 14, left: 14, right: 14),
+                                      child: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.sports_score_rounded,
+                                            color: Color(0xFF1E293B),
+                                            size: 26,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  'Destination',
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: const Color(0xFFE52020),
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 2),
+                                                Text(
+                                                  _toCity.isNotEmpty ? _toCity : 'Select destination',
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 15,
+                                                    fontWeight: FontWeight.w700,
+                                                    color: _toCity.isNotEmpty
+                                                        ? const Color(0xFF0F172A)
+                                                        : const Color(0xFF94A3B8),
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          const Icon(
+                                            Icons.chevron_right,
+                                            color: Color(0xFFAAAAAA),
+                                            size: 24,
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
+                            // Floating Swap Button centered on divider
+                            GestureDetector(
+                              onTap: _swapLocations,
+                              child: Container(
+                                width: 38,
+                                height: 38,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.05),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.swap_vert_rounded,
+                                    color: Color(0xFF334155),
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 16),
 
-                        // Vehicle Selection Row
+                        // ─── Vehicle Selection Row ───
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -659,9 +757,9 @@ class PassengerDashboardState extends State<PassengerDashboard>
                             _buildVehicleCard('Jeep', 'assets/images/jeep.png', _selectedVehicle == 'Jeep'),
                           ],
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 14),
 
-                        // Date & Return Row
+                        // ─── Date & Return Row ───
                         Row(
                           children: [
                             Expanded(
@@ -672,7 +770,7 @@ class PassengerDashboardState extends State<PassengerDashboard>
                                 onTap: _openDatePage,
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: _buildParamCard(
                                 iconData: Icons.autorenew_rounded,
@@ -683,11 +781,11 @@ class PassengerDashboardState extends State<PassengerDashboard>
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 14),
 
-                        // Search Button
+                        // ─── Search Button ───
                         SizedBox(
-                          height: 44,
+                          height: 50,
                           child: ElevatedButton(
                             onPressed: () {
                               Navigator.push(
@@ -702,18 +800,18 @@ class PassengerDashboardState extends State<PassengerDashboard>
                               foregroundColor: Colors.white,
                               elevation: 0,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(12),
                               ),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(Icons.search_rounded, color: Colors.white, size: 18),
-                                const SizedBox(width: 6),
+                                const Icon(Icons.search_rounded, color: Colors.white, size: 20),
+                                const SizedBox(width: 8),
                                 Text(
                                   'Search Rides',
                                   style: GoogleFonts.inter(
-                                    fontSize: 14,
+                                    fontSize: 16,
                                     fontWeight: FontWeight.w700,
                                     color: Colors.white,
                                   ),
@@ -743,13 +841,13 @@ class PassengerDashboardState extends State<PassengerDashboard>
           });
         },
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 3),
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
           decoration: BoxDecoration(
             color: isSelected ? const Color(0xFFFFF5F5) : Colors.white,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected ? const Color(0xFFEF4444) : const Color(0xFFE2E8F0),
+              color: isSelected ? const Color(0xFFE52020) : const Color(0xFFE2E8F0),
               width: isSelected ? 1.5 : 1.0,
             ),
           ),
@@ -758,10 +856,10 @@ class PassengerDashboardState extends State<PassengerDashboard>
             children: [
               Image.asset(
                 imagePath,
-                height: 36,
+                height: 40,
                 fit: BoxFit.contain,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               Text(
                 title,
                 style: GoogleFonts.inter(
@@ -786,17 +884,17 @@ class PassengerDashboardState extends State<PassengerDashboard>
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
         ),
         child: Row(
           children: [
             Container(
-              width: 30,
-              height: 30,
+              width: 32,
+              height: 32,
               decoration: const BoxDecoration(
                 color: Color(0xFFFFF1F1),
                 shape: BoxShape.circle,
@@ -804,7 +902,7 @@ class PassengerDashboardState extends State<PassengerDashboard>
               child: Icon(
                 iconData,
                 color: const Color(0xFFE52020),
-                size: 15,
+                size: 16,
               ),
             ),
             const SizedBox(width: 8),
@@ -828,7 +926,7 @@ class PassengerDashboardState extends State<PassengerDashboard>
                     child: Text(
                       value,
                       style: GoogleFonts.inter(
-                        fontSize: 12,
+                        fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: const Color(0xFF0F172A),
                       ),
