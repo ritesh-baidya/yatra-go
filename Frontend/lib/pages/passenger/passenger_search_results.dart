@@ -287,38 +287,6 @@ class _PassengerSearchResultsPageState extends State<PassengerSearchResultsPage>
                             letterSpacing: -0.5,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Sun, 25 May',
-                              style: GoogleFonts.inter(
-                                fontSize: 13,
-                                color: const Color(0xFF718096),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Container(
-                              width: 5,
-                              height: 5,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFE52020),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              '1 Seat',
-                              style: GoogleFonts.inter(
-                                fontSize: 13,
-                                color: const Color(0xFF718096),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
                       ],
                     ),
                   ),
@@ -384,7 +352,7 @@ class _PassengerSearchResultsPageState extends State<PassengerSearchResultsPage>
                             context: context,
                             name: ride.name,
                             rating: ride.rating,
-                            time: ride.time,
+                            date: 'Sun, 25 May',
                             fromLoc: ride.fromLoc,
                             toLoc: ride.toLoc,
                             seatsLeft: '${ride.seatsLeft} Seats Left',
@@ -505,7 +473,7 @@ class _PassengerSearchResultsPageState extends State<PassengerSearchResultsPage>
     required BuildContext context,
     required String name,
     required String rating,
-    required String time,
+    required String date,
     required String fromLoc,
     required String toLoc,
     required String seatsLeft,
@@ -547,64 +515,39 @@ class _PassengerSearchResultsPageState extends State<PassengerSearchResultsPage>
           },
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(
               children: [
-                // Left Column: Avatar + vertical route timeline line
-                SizedBox(
-                  width: 48,
-                  child: Column(
-                    children: [
-                      const CircleAvatar(
-                        radius: 24,
-                        backgroundImage:
-                            AssetImage('assets/images/profile_image.jpg'),
-                      ),
-                      const SizedBox(height: 16),
-                      Container(
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white,
-                          border: Border.all(
-                              color: const Color(0xFF10B981), width: 2),
+                // Top Row: Avatar and Driver Details
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Stack(
+                      children: [
+                        const CircleAvatar(
+                          radius: 24,
+                          backgroundImage: AssetImage('assets/images/profile_image.jpg'),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Column(
-                        children: List.generate(
-                          4,
-                          (index) => Container(
-                            width: 1.5,
-                            height: 4,
-                            margin: const EdgeInsets.symmetric(vertical: 1.5),
-                            color: const Color(0xFFCBD5E1),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(1.5),
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.verified,
+                              color: Color(0xFF10B981),
+                              size: 14,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Container(
-                        width: 10,
-                        height: 10,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white,
-                          border: Border.all(
-                              color: const Color(0xFFEF4444), width: 2),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 16),
-                // Right Column: Details, Locations, Seats Left and Pricing
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Driver Name + Rating Badge
-                      Row(
+                      ],
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
@@ -622,42 +565,20 @@ class _PassengerSearchResultsPageState extends State<PassengerSearchResultsPage>
                                   ),
                                 ),
                                 const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    Text(
-                                      time.split(' • ').first,
-                                      style: GoogleFonts.inter(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
-                                        color: const Color(0xFF94A3B8),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Container(
-                                      width: 4,
-                                      height: 4,
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFFE52020),
-                                        shape: BoxShape.circle,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      time.split(' • ').last,
-                                      style: GoogleFonts.inter(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
-                                        color: const Color(0xFF4A4A4A),
-                                      ),
-                                    ),
-                                  ],
+                                Text(
+                                  date,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: const Color(0xFF718096),
+                                  ),
                                 ),
                               ],
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
+                            margin: const EdgeInsets.only(top: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
                               color: const Color(0xFFFFF1F1),
                               borderRadius: BorderRadius.circular(8),
@@ -665,8 +586,7 @@ class _PassengerSearchResultsPageState extends State<PassengerSearchResultsPage>
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.star_rounded,
-                                    color: Color(0xFFE52020), size: 16),
+                                const Icon(Icons.star_rounded, color: Color(0xFFE52020), size: 16),
                                 const SizedBox(width: 4),
                                 Text(
                                   rating,
@@ -681,11 +601,27 @@ class _PassengerSearchResultsPageState extends State<PassengerSearchResultsPage>
                           ),
                         ],
                       ),
-
-                      const SizedBox(height: 18),
-
-                      // From Location + Seats Left Badge
-                      Row(
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 22),
+                // Middle Row: Pickup
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 48,
+                      child: Center(
+                        child: const Icon(
+                          Icons.directions_walk_rounded,
+                          color: Color(0xFF1E293B),
+                          size: 22,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    Expanded(
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
@@ -697,8 +633,7 @@ class _PassengerSearchResultsPageState extends State<PassengerSearchResultsPage>
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 6),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
                               color: const Color(0xFFFFF0F0),
                               borderRadius: BorderRadius.circular(8),
@@ -714,13 +649,47 @@ class _PassengerSearchResultsPageState extends State<PassengerSearchResultsPage>
                           ),
                         ],
                       ),
-
-                      const SizedBox(height: 20),
-
-                      // To Location + Pricing
-                      Row(
+                    ),
+                  ],
+                ),
+                // Timeline Dash
+                Row(
+                  children: [
+                    SizedBox(
+                      width: 48,
+                      child: Column(
+                        children: List.generate(
+                          3,
+                          (index) => Container(
+                            width: 1.5,
+                            height: 4,
+                            margin: const EdgeInsets.symmetric(vertical: 1.5),
+                            color: const Color(0xFFCBD5E1),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                // Bottom Row: Destination
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 48,
+                      child: Center(
+                        child: const Icon(
+                          Icons.sports_score_rounded,
+                          color: Color(0xFF1E293B),
+                          size: 22,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    Expanded(
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
                             toLoc,
@@ -756,8 +725,8 @@ class _PassengerSearchResultsPageState extends State<PassengerSearchResultsPage>
                           ),
                         ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ],
             ),

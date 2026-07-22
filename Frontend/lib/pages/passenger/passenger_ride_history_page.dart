@@ -215,31 +215,14 @@ class _PassengerRideHistoryPageState extends State<PassengerRideHistoryPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Container(
-                  width: 32,
-                  height: 1.5,
-                  color: const Color(0xFFE52020),
-                ),
-                const SizedBox(width: 8),
+                Container(width: 44, height: 1.5, color: const Color(0xFFE52020)),
+                const SizedBox(width: 6),
                 Transform.rotate(
-                  angle: 45 * 3.14159265 / 180,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: const Color(0xFFE52020),
-                        width: 1.5,
-                      ),
-                    ),
-                  ),
+                  angle: 0.7854,
+                  child: Container(width: 7, height: 7, color: const Color(0xFFE52020)),
                 ),
-                const SizedBox(width: 8),
-                Container(
-                  width: 32,
-                  height: 1.5,
-                  color: const Color(0xFFE52020),
-                ),
+                const SizedBox(width: 6),
+                Container(width: 44, height: 1.5, color: const Color(0xFFE52020)),
               ],
             ),
           ],
@@ -260,6 +243,7 @@ class _PassengerRideHistoryPageState extends State<PassengerRideHistoryPage> {
           Expanded(
             child: _buildTabButton(0, 'Completed (${_completedRides.length})'),
           ),
+          const SizedBox(width: 4),
           Expanded(
             child: _buildTabButton(1, 'Cancelled (${_cancelledRides.length})'),
           ),
@@ -277,7 +261,7 @@ class _PassengerRideHistoryPageState extends State<PassengerRideHistoryPage> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           color: isSelected ? Colors.white : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
@@ -295,7 +279,7 @@ class _PassengerRideHistoryPageState extends State<PassengerRideHistoryPage> {
           label,
           textAlign: TextAlign.center,
           style: GoogleFonts.inter(
-            fontSize: 13.5,
+            fontSize: 12.5,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             color: isSelected
                 ? const Color(0xFFE52020)
@@ -355,23 +339,28 @@ class _PassengerRideHistoryPageState extends State<PassengerRideHistoryPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.calendar_today_outlined,
-                      color: Color(0xFF64748B),
-                      size: 14,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '${ride['date']} • ${ride['time']}',
-                      style: GoogleFonts.inter(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xFF475569),
+                Expanded(
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.calendar_today_outlined,
+                        color: Color(0xFF64748B),
+                        size: 14,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          '${ride['date']}',
+                          style: GoogleFonts.inter(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF475569),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 Container(
                   padding:
@@ -414,9 +403,9 @@ class _PassengerRideHistoryPageState extends State<PassengerRideHistoryPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             const Divider(color: Color(0xFFF1F5F9), height: 1),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
             // Route details (From -> To)
             Row(
@@ -424,26 +413,20 @@ class _PassengerRideHistoryPageState extends State<PassengerRideHistoryPage> {
               children: [
                 Column(
                   children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF10B981),
-                        shape: BoxShape.circle,
-                      ),
+                    const Icon(
+                      Icons.directions_walk_rounded,
+                      color: Color(0xFF1E293B),
+                      size: 20,
                     ),
                     Container(
                       width: 1.5,
-                      height: 24,
+                      height: 18,
                       color: const Color(0xFFCBD5E1),
                     ),
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFE52020),
-                        shape: BoxShape.circle,
-                      ),
+                    const Icon(
+                      Icons.sports_score_rounded,
+                      color: Color(0xFF1E293B),
+                      size: 20,
                     ),
                   ],
                 ),
@@ -462,7 +445,7 @@ class _PassengerRideHistoryPageState extends State<PassengerRideHistoryPage> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 16),
                       Text(
                         ride['to'],
                         style: GoogleFonts.inter(
@@ -478,35 +461,42 @@ class _PassengerRideHistoryPageState extends State<PassengerRideHistoryPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             const Divider(color: Color(0xFFF1F5F9), height: 1),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16),
 
             // Driver & Price Row
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      ride['driverName'],
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF1E293B),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        ride['driverName'],
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF1E293B),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    Text(
-                      ride['vehicle'],
-                      style: GoogleFonts.inter(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xFF64748B),
+                      Text(
+                        ride['vehicle'],
+                        style: GoogleFonts.inter(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF64748B),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+                const SizedBox(width: 8),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [

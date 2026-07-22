@@ -127,7 +127,7 @@ class _PassengerNotificationPageState extends State<PassengerNotificationPage> {
                           ),
                           child: const Icon(
                             Icons.arrow_back,
-                            color: Color(0xFF0F172A),
+                            color: Color(0xFFE52020),
                             size: 20,
                           ),
                         ),
@@ -146,6 +146,21 @@ class _PassengerNotificationPageState extends State<PassengerNotificationPage> {
                                   fontWeight: FontWeight.w800,
                                   color: const Color(0xFF0F172A),
                                 ),
+                              ),
+                              const SizedBox(height: 6),
+                              // Decorative line: — ❖ —
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(width: 44, height: 1.5, color: const Color(0xFFE52020)),
+                                  const SizedBox(width: 6),
+                                  Transform.rotate(
+                                    angle: 0.7854,
+                                    child: Container(width: 7, height: 7, color: const Color(0xFFE52020)),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Container(width: 44, height: 1.5, color: const Color(0xFFE52020)),
+                                ],
                               ),
                             ],
                           ),

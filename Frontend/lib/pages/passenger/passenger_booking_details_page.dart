@@ -897,6 +897,7 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
           GestureDetector(
             onTap: () {
               final code = _couponController.text.trim();
+              ScaffoldMessenger.of(context).clearSnackBars();
               if (code.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -906,6 +907,7 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                     ),
                     backgroundColor: const Color(0xFFEF4444),
                     behavior: SnackBarBehavior.floating,
+                    duration: const Duration(milliseconds: 400),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -923,6 +925,7 @@ class _RideDetailsPageState extends State<RideDetailsPage> {
                     ),
                     backgroundColor: const Color(0xFF22C55E),
                     behavior: SnackBarBehavior.floating,
+                    duration: const Duration(milliseconds: 400),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),

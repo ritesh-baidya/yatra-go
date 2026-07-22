@@ -89,7 +89,7 @@ class _CancelBookingPageState extends State<CancelBookingPage> {
                                     style: GoogleFonts.inter(
                                       fontSize: 22,
                                       fontWeight: FontWeight.w700,
-                                      color: const Color(0xFFE52020),
+                                      color: const Color(0xFF0F172A),
                                       letterSpacing: -0.5,
                                     ),
                                   ),
@@ -97,39 +97,14 @@ class _CancelBookingPageState extends State<CancelBookingPage> {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Container(
-                                        width: 40,
-                                        height: 2,
-                                        decoration: const BoxDecoration(
-                                          gradient: LinearGradient(
-                                            colors: [Colors.transparent, Color(0xFFE52020)],
-                                          ),
-                                        ),
-                                      ),
+                                      Container(width: 44, height: 1.5, color: const Color(0xFFE52020)),
                                       const SizedBox(width: 6),
                                       Transform.rotate(
-                                        angle: 0.785398, // 45 degrees in radians
-                                        child: Container(
-                                          width: 8,
-                                          height: 8,
-                                          decoration: BoxDecoration(
-                                            border: Border.all(
-                                              color: const Color(0xFFE52020),
-                                              width: 1.5,
-                                            ),
-                                          ),
-                                        ),
+                                        angle: 0.7854,
+                                        child: Container(width: 7, height: 7, color: const Color(0xFFE52020)),
                                       ),
                                       const SizedBox(width: 6),
-                                      Container(
-                                        width: 40,
-                                        height: 2,
-                                        decoration: const BoxDecoration(
-                                          gradient: LinearGradient(
-                                            colors: [Color(0xFFE52020), Colors.transparent],
-                                          ),
-                                        ),
-                                      ),
+                                      Container(width: 44, height: 1.5, color: const Color(0xFFE52020)),
                                     ],
                                   ),
                                 ],
@@ -207,7 +182,7 @@ class _CancelBookingPageState extends State<CancelBookingPage> {
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          '${widget.ride['date'] ?? 'Today'}  •  ${widget.ride['time'] ?? '7:00 AM'}',
+                                          '${widget.ride['date'] ?? 'Today'}',
                                           style: GoogleFonts.inter(
                                             fontSize: 13,
                                             fontWeight: FontWeight.w500,
@@ -217,20 +192,45 @@ class _CancelBookingPageState extends State<CancelBookingPage> {
                                       ],
                                     ),
                                   ),
-                                  // Confirmed Badge
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 6),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFE8F5E9),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      widget.ride['status'] ?? 'Confirmed',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                        color: const Color(0xFF1B5E20),
+                                  // Nepal Plate Box
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(color: const Color(0xFFE5E7EB), width: 1.2),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const NepalFlag(width: 14, height: 17),
+                                          const SizedBox(width: 6),
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                widget.ride['plateProvince'] ?? 'BAGMATI',
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 7.5,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: const Color(0xFF9CA3AF),
+                                                ),
+                                              ),
+                                              const SizedBox(height: 0.5),
+                                              Text(
+                                                widget.ride['licensePlate'] ?? 'BAA 1234',
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: const Color(0xFF111827),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),
@@ -252,13 +252,24 @@ class _CancelBookingPageState extends State<CancelBookingPage> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         // Icons column
-                                        Column(
-                                          children: [
-                                            const SizedBox(height: 2),
-                                            const Icon(
-                                              Icons.location_on,
-                                              color: Color(0xFFE52020),
-                                              size: 20,
+                                        Transform.translate(
+                                          offset: const Offset(0, -1),
+                                          child: Column(
+                                            children: [
+
+                                            Container(
+                                              width: 32,
+                                              height: 32,
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFF8FAFC),
+                                                shape: BoxShape.circle,
+                                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                                              ),
+                                              child: const Icon(
+                                                Icons.directions_walk_rounded,
+                                                color: Color(0xFF0F172A),
+                                                size: 17,
+                                              ),
                                             ),
                                             const SizedBox(height: 4),
                                             Column(
@@ -280,12 +291,22 @@ class _CancelBookingPageState extends State<CancelBookingPage> {
                                                       )),
                                             ),
                                             const SizedBox(height: 4),
-                                            const Icon(
-                                              Icons.location_on,
-                                              color: Color(0xFF22C55E),
-                                              size: 20,
+                                            Container(
+                                              width: 32,
+                                              height: 32,
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFFF8FAFC),
+                                                shape: BoxShape.circle,
+                                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                                              ),
+                                              child: const Icon(
+                                                Icons.sports_score_rounded,
+                                                color: Color(0xFF0F172A),
+                                                size: 17,
+                                              ),
                                             ),
                                           ],
+                                        ),
                                         ),
                                         const SizedBox(width: 8),
                                         // Text column
@@ -340,97 +361,7 @@ class _CancelBookingPageState extends State<CancelBookingPage> {
                                       ],
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
-                                  // Seat + Fare (Right side)
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.end,
-                                    children: [
-                                      // Seat badge
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 10, vertical: 8),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFF8FAFC),
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                          border: Border.all(
-                                              color: const Color(0xFFE2E8F0),
-                                              width: 1),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Container(
-                                              padding: const EdgeInsets.all(5),
-                                              decoration: BoxDecoration(
-                                                color: const Color(0xFFFFF1F2),
-                                                borderRadius:
-                                                    BorderRadius.circular(6),
-                                              ),
-                                              child: const Icon(
-                                                Icons.chair_alt_rounded,
-                                                color: Color(0xFFE52020),
-                                                size: 16,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  'Seat',
-                                                  style: GoogleFonts.inter(
-                                                    fontSize: 11,
-                                                    fontWeight:
-                                                        FontWeight.w500,
-                                                    color: const Color(
-                                                        0xFF94A3B8),
-                                                  ),
-                                                ),
-                                                Text(
-                                                  '3A (1 Seat)',
-                                                  style: GoogleFonts.inter(
-                                                    fontSize: 12.5,
-                                                    fontWeight:
-                                                        FontWeight.w700,
-                                                    color: const Color(
-                                                        0xFF1E293B),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(height: 24),
-                                      // Total Fare - Stacked Vertically
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.end,
-                                        children: [
-                                          Text(
-                                            'Total Fare',
-                                            style: GoogleFonts.inter(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w500,
-                                              color: const Color(0xFF94A3B8),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            'Rs. ${widget.ride['price'] ?? 700}',
-                                            style: GoogleFonts.inter(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.w800,
-                                              color: const Color(0xFFE52020),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
+
                                 ],
                               ),
                             ],
@@ -715,3 +646,69 @@ class _CancelBookingPageState extends State<CancelBookingPage> {
 }
 
 
+
+class NepalFlag extends StatelessWidget {
+  final double width;
+  final double height;
+
+  const NepalFlag({
+    super.key,
+    this.width = 14,
+    this.height = 18,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: Size(width, height),
+      painter: NepalFlagPainter(),
+    );
+  }
+}
+
+class NepalFlagPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = const Color(0xFFDC2626) // crimson red
+      ..style = PaintingStyle.fill;
+
+    final borderPaint = Paint()
+      ..color = const Color(0xFF1E3A8A) // dark blue
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+
+    final path = Path();
+    path.moveTo(0, 0);
+    path.lineTo(size.width, size.height * 0.48);
+    path.lineTo(size.width * 0.28, size.height * 0.48);
+    path.lineTo(size.width * 0.9, size.height * 0.95);
+    path.lineTo(0, size.height * 0.95);
+    path.lineTo(0, 0);
+    path.close();
+
+    canvas.drawPath(path, paint);
+    canvas.drawPath(path, borderPaint);
+
+    final symbolPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+
+    // Upper crescent moon representation
+    canvas.drawCircle(
+      Offset(size.width * 0.22, size.height * 0.25),
+      1.2,
+      symbolPaint,
+    );
+
+    // Lower sun representation
+    canvas.drawCircle(
+      Offset(size.width * 0.25, size.height * 0.72),
+      1.6,
+      symbolPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}

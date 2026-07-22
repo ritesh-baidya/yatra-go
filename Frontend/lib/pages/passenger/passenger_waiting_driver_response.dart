@@ -184,7 +184,7 @@ class _WaitingBody extends StatelessWidget {
                     _RouteCard(
                       pickup: pickup,
                       dropoff: dropoff,
-                      date: '$dateStr, $timeStr',
+                      date: dateStr,
                       seats: seats,
                     ),
 
