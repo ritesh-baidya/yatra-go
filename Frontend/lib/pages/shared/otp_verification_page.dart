@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'turn_on_location_page.dart';
 import '../passenger/passenger_verified_number_page.dart';
+import '../../features/auth/auth_api.dart';
 
 class OtpVerificationPage extends StatefulWidget {
   final String phoneNumber;
@@ -30,8 +31,11 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
 
   // Animation
   bool _visible = false;
+  bool _isVerifying = false;
   late AnimationController _shieldAnimController;
   late Animation<double> _shieldScaleAnim;
+
+  String get _fullPhone => '+977${widget.phoneNumber}';
 
   @override
   void initState() {
@@ -73,6 +77,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
   }
 
   void _onKeyTap(String key) {
+    if (_isVerifying) return;
     setState(() {
       if (key == 'delete') {
         if (_currentIndex > 0) {
@@ -93,34 +98,82 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
     });
   }
 
-  void _verifyOtp() {
-    // Navigate to PassengerDashboard or PassengerVerifiedPage on successful verification
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (mounted) {
-        if (widget.isFromSafety) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const PassengerVerifiedNumberPage(),
-            ),
-          );
-        } else {
-          Navigator.pushAndRemoveUntil(
-            context,
-            PageRouteBuilder(
-              transitionDuration: const Duration(milliseconds: 500),
-              pageBuilder: (context, animation, secondaryAnimation) =>
-                  const TurnOnLocationPage(),
-              transitionsBuilder:
-                  (context, animation, secondaryAnimation, child) {
-                return FadeTransition(opacity: animation, child: child);
-              },
-            ),
-            (route) => false, // Remove all previous routes
-          );
-        }
+  Future<void> _resendOtp() async {
+    try {
+      await AuthApi.instance.sendOtp(_fullPhone);
+      if (!mounted) return;
+      setState(() {
+        _secondsRemaining = 25;
+        _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+          if (_secondsRemaining > 0) {
+            setState(() => _secondsRemaining--);
+          } else {
+            timer.cancel();
+          }
+        });
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('OTP resent.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: const Color(0xFFE52020),
+        ),
+      );
+    }
+  }
+
+  Future<void> _verifyOtp() async {
+    setState(() => _isVerifying = true);
+    try {
+      await AuthApi.instance.verifyOtp(
+        phoneNumber: _fullPhone,
+        otp: _otpDigits.join(),
+      );
+      if (!mounted) return;
+
+      if (widget.isFromSafety) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const PassengerVerifiedNumberPage(),
+          ),
+        );
+      } else {
+        Navigator.pushAndRemoveUntil(
+          context,
+          PageRouteBuilder(
+            transitionDuration: const Duration(milliseconds: 500),
+            pageBuilder: (context, animation, secondaryAnimation) =>
+                const TurnOnLocationPage(),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+          ),
+          (route) => false, // Remove all previous routes
+        );
       }
-    });
+    } catch (e) {
+      if (!mounted) return;
+      // Clear the entered code so the user can retry.
+      setState(() {
+        for (int i = 0; i < _otpDigits.length; i++) {
+          _otpDigits[i] = '';
+        }
+        _currentIndex = 0;
+        _isVerifying = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: const Color(0xFFE52020),
+        ),
+      );
+    }
   }
 
   @override
@@ -409,20 +462,7 @@ class _OtpVerificationPageState extends State<OtpVerificationPage>
     final bool canResend = _secondsRemaining == 0;
 
     return GestureDetector(
-      onTap: canResend
-          ? () {
-              setState(() {
-                _secondsRemaining = 25;
-                _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-                  if (_secondsRemaining > 0) {
-                    setState(() => _secondsRemaining--);
-                  } else {
-                    timer.cancel();
-                  }
-                });
-              });
-            }
-          : null,
+      onTap: canResend ? _resendOtp : null,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,

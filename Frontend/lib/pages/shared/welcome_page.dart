@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'otp_verification_page.dart';
+import '../../features/auth/auth_api.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -17,6 +18,7 @@ class _LoginPageState extends State<LoginPage> {
   Timer? _deleteTimer;
   bool _visible = false;
   bool _showKeypad = false;
+  bool _isSending = false;
 
   @override
   void initState() {
@@ -65,31 +67,46 @@ class _LoginPageState extends State<LoginPage> {
     _deleteTimer = null;
   }
 
-  void _onSendOtp() {
-    if (_phoneController.text.length != 10) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Please enter a valid 10-digit mobile number.',
-            style: GoogleFonts.inter(color: Colors.white),
-          ),
-          backgroundColor: const Color(0xFFE52020),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+  Future<void> _onSendOtp() async {
+    if (_isSending) return;
+
+    final phone = _phoneController.text;
+    if (phone.length != 10 || !phone.startsWith('9')) {
+      _showError('Please enter a valid 10-digit mobile number.');
       return;
     }
 
-    final phone = _phoneController.text;
-    Navigator.push(
-      context,
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 500),
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            OtpVerificationPage(phoneNumber: phone),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
+    setState(() => _isSending = true);
+    try {
+      await AuthApi.instance.sendOtp('+977$phone');
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        PageRouteBuilder(
+          transitionDuration: const Duration(milliseconds: 500),
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              OtpVerificationPage(phoneNumber: phone),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
+      );
+    } catch (e) {
+      _showError(e.toString());
+    } finally {
+      if (mounted) setState(() => _isSending = false);
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: GoogleFonts.inter(color: Colors.white),
+        ),
+        backgroundColor: const Color(0xFFE52020),
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }
@@ -442,30 +459,41 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ],
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Spacer(),
-            const SizedBox(width: 40), // balance the arrow on the right
-            Text(
-              'Send OTP',
-              style: GoogleFonts.inter(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
+        child: _isSending
+            ? const Center(
+                child: SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.4,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Spacer(),
+                  const SizedBox(width: 40), // balance the arrow on the right
+                  Text(
+                    'Send OTP',
+                    style: GoogleFonts.inter(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const Spacer(),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 18),
+                    child: const Icon(
+                      Icons.arrow_forward,
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const Spacer(),
-            Padding(
-              padding: const EdgeInsets.only(right: 18),
-              child: const Icon(
-                Icons.arrow_forward,
-                color: Colors.white,
-                size: 22,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
