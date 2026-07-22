@@ -1,0 +1,890 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── ENUMS ───────────────────────────────────────────────────
+
+enum UserMode {
+  passenger
+  driver
+}
+
+enum UserRole {
+  user
+  admin
+  super_admin
+}
+
+enum Gender {
+  male
+  female
+  other
+  prefer_not_to_say
+}
+
+enum VerificationStatus {
+  not_submitted
+  under_review
+  approved
+  rejected
+}
+
+enum DocType {
+  citizenship_front
+  citizenship_back
+  license_front
+  license_back
+  selfie
+  bluebook
+  insurance
+}
+
+enum DocStatus {
+  pending
+  approved
+  rejected
+}
+
+enum VehicleType {
+  motorcycle
+  car
+  suv
+  microbus
+}
+
+enum RideStatus {
+  published
+  in_progress
+  completed
+  cancelled
+}
+
+enum SmokingPref {
+  no_smoking
+  smoking_ok
+}
+
+enum LuggagePref {
+  no_luggage
+  small_only
+  any
+}
+
+enum BookingStatus {
+  pending
+  confirmed
+  rejected
+  cancelled
+  completed
+  expired
+}
+
+enum AccountStatus {
+  active
+  pending_deletion
+  deleted
+}
+
+enum ReactivationStatus {
+  pending
+  approved
+  rejected
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  refunded
+  failed
+}
+
+enum DiscountType {
+  percentage
+  fixed
+}
+
+enum CouponAudience {
+  all
+  passenger
+  driver
+}
+
+enum RedemptionStatus {
+  applied
+  reversed
+}
+
+enum SupportStatus {
+  open
+  in_progress
+  closed
+}
+
+enum IssueCategory {
+  driver
+  passenger
+  payment
+  safety
+  technical
+  other
+}
+
+enum PaymentMethod {
+  cash
+  esewa
+  khalti
+}
+
+enum RateeType {
+  driver
+  passenger
+}
+
+enum NotifType {
+  booking_confirmed
+  booking_rejected
+  booking_requested
+  booking_expired
+  ride_reminder
+  trip_started
+  trip_completed
+  payment_received
+  refund_issued
+  payout_update
+  sos_alert
+  promotion
+  wallet_low
+  commission_charged
+  wallet_topup
+  system
+}
+
+enum WalletTxType {
+  credit
+  debit
+}
+
+enum SosStatus {
+  open
+  acknowledged
+  resolved
+}
+
+enum Platform {
+  android
+  ios
+}
+
+enum ReportStatus {
+  open
+  investigating
+  resolved
+  dismissed
+}
+
+// ─── MODELS ──────────────────────────────────────────────────
+
+model User {
+  id                      String        @id @default(uuid())
+  phoneNumber             String        @unique @map("phone_number")
+  fullName                String?       @map("full_name")
+  profilePhotoUrl         String?       @map("profile_photo_url")
+  gender                  Gender?
+  dateOfBirth             DateTime?     @map("date_of_birth")
+  language                String        @default("ne")
+  activeMode              UserMode      @default(passenger) @map("active_mode")
+  role                    UserRole      @default(user)
+  isVerified              Boolean       @default(false) @map("is_verified")
+  isActive                Boolean       @default(true) @map("is_active")
+  // Lifecycle status, distinct from isActive (admin suspend). active →
+  // pending_deletion (30-day grace, login+browse allowed, mutations blocked)
+  // → deleted (retained for phone reuse detection / admin-approved restore).
+  accountStatus           AccountStatus @default(active) @map("account_status")
+  // Legacy per-category on/off switches (see notification-preferences.ts).
+  notificationSettings    Json?         @map("notification_settings")
+  // Richer channel×category matrix (push/email/sms) — see notification-channel-preferences.ts.
+  notificationPreferences Json?         @map("notification_preferences")
+  // Profile/phone/ride visibility + marketing/analytics consent.
+  privacySettings         Json?         @map("privacy_settings")
+  deletionRequestedAt     DateTime?     @map("deletion_requested_at")
+  // TOTP MFA (admin accounts). Secret is AES-256-GCM encrypted at rest.
+  totpSecret              String?       @map("totp_secret")
+  totpEnabledAt           DateTime?     @map("totp_enabled_at")
+  // Cumulative fraud score; FraudEvent rows are the ledger behind it.
+  fraudScore              Int           @default(0) @map("fraud_score")
+  createdAt               DateTime      @default(now()) @map("created_at")
+  updatedAt               DateTime      @updatedAt @map("updated_at")
+
+  driverProfile        DriverProfile?
+  bookings             Booking[]
+  sentMessages         Message[]             @relation("sender")
+  notifications        Notification[]
+  deviceTokens         DeviceToken[]
+  emergencyContacts    EmergencyContact[]
+  reportsGiven         UserReport[]          @relation("reporter")
+  reportsReceived      UserReport[]          @relation("reported")
+  ratingsGiven         Rating[]              @relation("rater")
+  ratingsReceived      Rating[]              @relation("ratee")
+  authSessions         AuthSession[]
+  wallet               Wallet?
+  sosAlerts            SosAlert[]
+  walletTopups         WalletTopup[]
+  fraudEvents          FraudEvent[]
+  reactivationRequests ReactivationRequest[] @relation("previousUser")
+  couponRedemptions    CouponRedemption[]
+  supportTickets       SupportTicket[]
+  issueReports         IssueReport[]
+
+  @@index([accountStatus])
+  @@map("users")
+}
+
+// A previously-deleted phone number attempting to log back in. Blocks
+// automatic account creation; an admin must approve before the number can
+// be used again (restores the previous account for continuity).
+model ReactivationRequest {
+  id              String             @id @default(uuid())
+  phoneNumber     String             @map("phone_number")
+  previousUserId  String             @map("previous_user_id")
+  status          ReactivationStatus @default(pending)
+  rejectionReason String?            @map("rejection_reason")
+  requestedAt     DateTime           @default(now()) @map("requested_at")
+  reviewedAt      DateTime?          @map("reviewed_at")
+  reviewedBy      String?            @map("reviewed_by")
+
+  previousUser User @relation("previousUser", fields: [previousUserId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([phoneNumber])
+  @@map("reactivation_requests")
+}
+
+// Admin-managed discount codes. All validation and discount math happens
+// server-side (CouponsService) — the client never computes a discount.
+model Coupon {
+  id            String         @id @default(uuid())
+  code          String         @unique
+  description   String?
+  discountType  DiscountType   @map("discount_type")
+  // Percentage points (0-100) when percentage, else an absolute NPR amount.
+  discountValue Float          @map("discount_value")
+  // Cap for percentage coupons (ignored for fixed). Null = uncapped.
+  maxDiscount   Float?         @map("max_discount")
+  // Minimum eligible amount (e.g. ride fare) for the coupon to apply.
+  minAmount     Float          @default(0) @map("min_amount")
+  audience      CouponAudience @default(all)
+  // Global redemption cap across all users. Null = unlimited.
+  usageLimit    Int?           @map("usage_limit")
+  // Per-user redemption cap. Null = unlimited.
+  perUserLimit  Int?           @map("per_user_limit")
+  isActive      Boolean        @default(true) @map("is_active")
+  validFrom     DateTime?      @map("valid_from")
+  validUntil    DateTime?      @map("valid_until")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+
+  redemptions CouponRedemption[]
+
+  @@index([isActive])
+  @@map("coupons")
+}
+
+// One redemption ledger row per applied coupon. `reversed` rows (booking
+// cancelled/rejected/expired) do not count toward usage limits.
+model CouponRedemption {
+  id             String           @id @default(uuid())
+  couponId       String           @map("coupon_id")
+  userId         String           @map("user_id")
+  bookingId      String?          @map("booking_id")
+  discountAmount Float            @map("discount_amount")
+  status         RedemptionStatus @default(applied)
+  createdAt      DateTime         @default(now()) @map("created_at")
+  reversedAt     DateTime?        @map("reversed_at")
+
+  coupon Coupon @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([bookingId])
+  @@index([couponId, status])
+  @@index([userId])
+  @@map("coupon_redemptions")
+}
+
+// "Contact Us" — general support tickets, not tied to a ride.
+model SupportTicket {
+  id          String        @id @default(uuid())
+  userId      String        @map("user_id")
+  category    String
+  subject     String
+  description String
+  attachments String[]      @default([])
+  status      SupportStatus @default(open)
+  adminReply  String?       @map("admin_reply")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  resolvedAt  DateTime?     @map("resolved_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@map("support_tickets")
+}
+
+// "Report an Issue" — ride/booking-specific problem reports.
+model IssueReport {
+  id          String        @id @default(uuid())
+  userId      String        @map("user_id")
+  bookingId   String?       @map("booking_id")
+  rideId      String?       @map("ride_id")
+  category    IssueCategory
+  description String
+  attachments String[]      @default([])
+  status      ReportStatus  @default(open)
+  assignedTo  String?       @map("assigned_to")
+  resolution  String?
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  resolvedAt  DateTime?     @map("resolved_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@map("issue_reports")
+}
+
+model AuthSession {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  // SHA-256 hex of the opaque refresh token. Raw tokens are never persisted:
+  // a database leak must not hand out live sessions.
+  tokenHash  String   @unique @map("token_hash")
+  // Rotation lineage. Every rotation keeps the family id; reuse of a rotated
+  // token revokes the entire family (theft response, RFC 6819 5.2.2.3).
+  familyId   String   @map("family_id")
+  deviceInfo String?  @map("device_info")
+  ipAddress  String?  @map("ip_address")
+  // SHA-256 of the client-supplied device identifier. Used to spot the same
+  // physical device cycling through many accounts (account farming).
+  deviceId   String?  @map("device_id")
+  // GeoIP-resolved login location (only set when a GeoIP DB is configured).
+  // Drives impossible-travel and country-change anomaly detection.
+  country    String?
+  geoLat     Float?   @map("geo_lat")
+  geoLng     Float?   @map("geo_lng")
+  lastUsedAt DateTime @default(now()) @map("last_used_at")
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+  @@index([deviceId])
+  @@map("auth_sessions")
+}
+
+model DriverProfile {
+  id                 String             @id @default(uuid())
+  userId             String             @unique @map("user_id")
+  verificationStatus VerificationStatus @default(not_submitted) @map("verification_status")
+  averageRating      Float              @default(0) @map("average_rating")
+  totalTrips         Int                @default(0) @map("total_trips")
+  acceptanceRate     Float              @default(0) @map("acceptance_rate")
+  completionRate     Float              @default(0) @map("completion_rate")
+  cancellationRate   Float              @default(0) @map("cancellation_rate")
+  rejectionReason    String?            @map("rejection_reason")
+  verifiedAt         DateTime?          @map("verified_at")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  lastLat            Float?
+  lastLng            Float?
+  lastLocationAt     DateTime?
+
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documents   DriverDocument[]
+  vehicles    Vehicle[]
+  rides       Ride[]
+  payouts     Payout[]
+  rewards     DriverReward[]
+  commissions CommissionRecord[]
+
+  @@map("driver_profiles")
+}
+
+model DriverDocument {
+  id              String    @id @default(uuid())
+  driverId        String    @map("driver_id")
+  docType         DocType   @map("doc_type")
+  fileUrl         String    @map("file_url")
+  status          DocStatus @default(pending)
+  rejectionReason String?   @map("rejection_reason")
+  expiryDate      DateTime? @map("expiry_date")
+  reviewedAt      DateTime? @map("reviewed_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  driver DriverProfile @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  @@unique([driverId, docType])
+  @@map("driver_documents")
+}
+
+model Vehicle {
+  id          String      @id @default(uuid())
+  driverId    String      @map("driver_id")
+  make        String
+  model       String
+  year        Int
+  plateNumber String      @unique @map("plate_number")
+  color       String?
+  vehicleType VehicleType @default(car) @map("vehicle_type")
+  totalSeats  Int         @default(4) @map("total_seats")
+  isActive    Boolean     @default(true) @map("is_active")
+  createdAt   DateTime    @default(now()) @map("created_at")
+
+  driver    DriverProfile     @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  documents VehicleDocument[]
+  rides     Ride[]
+
+  @@map("vehicles")
+}
+
+model VehicleDocument {
+  id        String    @id @default(uuid())
+  vehicleId String    @map("vehicle_id")
+  docType   DocType   @map("doc_type")
+  fileUrl   String    @map("file_url")
+  status    DocStatus @default(pending)
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@map("vehicle_documents")
+}
+
+model Ride {
+  id             String      @id @default(uuid())
+  driverId       String      @map("driver_id")
+  vehicleId      String      @map("vehicle_id")
+  originName     String      @map("origin_name")
+  originLat      Float       @map("origin_lat")
+  originLng      Float       @map("origin_lng")
+  originCity     String?     @map("origin_city")
+  originState    String?     @map("origin_state")
+  destName       String      @map("dest_name")
+  destLat        Float       @map("dest_lat")
+  destLng        Float       @map("dest_lng")
+  destCity       String?     @map("dest_city")
+  destState      String?     @map("dest_state")
+  departureAt    DateTime    @map("departure_at")
+  totalSeats     Int         @map("total_seats")
+  availableSeats Int         @map("available_seats")
+  pricePerSeat   Float       @map("price_per_seat")
+  status         RideStatus  @default(published)
+  womenOnly      Boolean     @default(false) @map("women_only")
+  smokingPref    SmokingPref @default(no_smoking) @map("smoking_pref")
+  luggagePref    LuggagePref @default(any) @map("luggage_pref")
+  notes          String?
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+  startedAt      DateTime?   @map("started_at")
+  completedAt    DateTime?   @map("completed_at")
+
+  driver      DriverProfile      @relation(fields: [driverId], references: [id])
+  vehicle     Vehicle            @relation(fields: [vehicleId], references: [id])
+  stops       RideStop[]
+  bookings    Booking[]
+  commissions CommissionRecord[]
+
+  @@map("rides")
+}
+
+model RideStop {
+  id               String @id @default(uuid())
+  rideId           String @map("ride_id")
+  locationName     String @map("location_name")
+  lat              Float
+  lng              Float
+  stopOrder        Int    @map("stop_order")
+  minutesFromStart Int?   @map("minutes_from_start")
+
+  ride Ride @relation(fields: [rideId], references: [id], onDelete: Cascade)
+
+  @@unique([rideId, stopOrder])
+  @@map("ride_stops")
+}
+
+model Booking {
+  id                 String        @id @default(uuid())
+  rideId             String        @map("ride_id")
+  passengerId        String        @map("passenger_id")
+  seatsBooked        Int           @default(1) @map("seats_booked")
+  totalAmount        Float         @map("total_amount")
+  status             BookingStatus @default(pending)
+  paymentStatus      PaymentStatus @default(pending) @map("payment_status")
+  pickupLat          Float?        @map("pickup_lat")
+  pickupLng          Float?        @map("pickup_lng")
+  pickupName         String?       @map("pickup_name")
+  dropLat            Float?        @map("drop_lat")
+  dropLng            Float?        @map("drop_lng")
+  dropName           String?       @map("drop_name")
+  couponCode         String?       @map("coupon_code")
+  discountAmount     Float         @default(0) @map("discount_amount")
+  cancellationReason String?       @map("cancellation_reason")
+  bookedAt           DateTime      @default(now()) @map("booked_at")
+  confirmedAt        DateTime?     @map("confirmed_at")
+  cancelledAt        DateTime?     @map("cancelled_at")
+  completedAt        DateTime?     @map("completed_at")
+
+  ride      Ride         @relation(fields: [rideId], references: [id])
+  passenger User         @relation(fields: [passengerId], references: [id])
+  payments  Payment[]
+  messages  Message[]
+  ratings   Rating[]
+  reports   UserReport[]
+
+  @@unique([rideId, passengerId])
+  @@map("bookings")
+}
+
+model Payment {
+  id              String        @id @default(uuid())
+  bookingId       String        @map("booking_id")
+  userId          String        @map("user_id")
+  amount          Float
+  method          PaymentMethod
+  status          PaymentStatus @default(pending)
+  gatewayRef      String?       @map("gateway_ref")
+  gatewayResponse Json?         @map("gateway_response")
+  initiatedAt     DateTime      @default(now()) @map("initiated_at")
+  completedAt     DateTime?     @map("completed_at")
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  @@map("payments")
+}
+
+model Payout {
+  id               String    @id @default(uuid())
+  driverId         String    @map("driver_id")
+  grossAmount      Float     @map("gross_amount")
+  commissionRate   Float     @map("commission_rate")
+  commissionAmount Float     @map("commission_amount")
+  netAmount        Float     @map("net_amount")
+  method           String
+  accountReference String    @map("account_reference")
+  status           String    @default("pending")
+  failureReason    String?   @map("failure_reason")
+  requestedAt      DateTime  @default(now()) @map("requested_at")
+  processedAt      DateTime? @map("processed_at")
+
+  driver DriverProfile @relation(fields: [driverId], references: [id])
+
+  @@map("payouts")
+}
+
+model CommissionRecord {
+  id         String   @id @default(uuid())
+  rideId     String   @map("ride_id")
+  driverId   String   @map("driver_id")
+  mode       String // "percent" | "fixed"
+  rate       Float // percent used, or 0 for fixed mode
+  grossFares Float    @map("gross_fares")
+  amount     Float
+  status     String   @default("charged") // charged | owed | waived
+  note       String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  ride   Ride          @relation(fields: [rideId], references: [id])
+  driver DriverProfile @relation(fields: [driverId], references: [id])
+
+  @@index([driverId])
+  @@map("commission_records")
+}
+
+model Rating {
+  id         String    @id @default(uuid())
+  bookingId  String    @map("booking_id")
+  raterId    String    @map("rater_id")
+  rateeId    String    @map("ratee_id")
+  rateeType  RateeType @map("ratee_type")
+  score      Int
+  reviewText String?   @map("review_text")
+  tags       String[]  @default([])
+  isHidden   Boolean   @default(false) @map("is_hidden")
+  flagReason String?   @map("flag_reason")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+  rater   User    @relation("rater", fields: [raterId], references: [id])
+  ratee   User    @relation("ratee", fields: [rateeId], references: [id])
+
+  @@unique([bookingId, raterId])
+  @@map("ratings")
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  bookingId  String   @map("booking_id")
+  senderId   String   @map("sender_id")
+  receiverId String   @map("receiver_id")
+  content    String
+  isRead     Boolean  @default(false) @map("is_read")
+  sentAt     DateTime @default(now()) @map("sent_at")
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+  sender  User    @relation("sender", fields: [senderId], references: [id])
+
+  @@map("messages")
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
+  type      NotifType
+  title     String
+  body      String
+  data      Json?
+  isRead    Boolean   @default(false) @map("is_read")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model DeviceToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  fcmToken  String   @unique @map("fcm_token")
+  platform  Platform
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("device_tokens")
+}
+
+model EmergencyContact {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  fullName     String   @map("full_name")
+  phoneNumber  String   @map("phone_number")
+  relationship String?
+  sortOrder    Int      @default(0) @map("sort_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("emergency_contacts")
+}
+
+model UserReport {
+  id          String       @id @default(uuid())
+  reporterId  String       @map("reporter_id")
+  reportedId  String       @map("reported_id")
+  bookingId   String?      @map("booking_id")
+  reason      String
+  description String?
+  status      ReportStatus @default(open)
+  createdAt   DateTime     @default(now()) @map("created_at")
+  resolvedAt  DateTime?    @map("resolved_at")
+
+  reporter User     @relation("reporter", fields: [reporterId], references: [id])
+  reported User     @relation("reported", fields: [reportedId], references: [id])
+  booking  Booking? @relation(fields: [bookingId], references: [id])
+
+  @@map("user_reports")
+}
+
+model DriverReward {
+  id       String   @id @default(uuid())
+  driverId String   @map("driver_id")
+  title    String
+  amount   Float
+  status   String   @default("pending")
+  earnedAt DateTime @default(now()) @map("earned_at")
+
+  driver DriverProfile @relation(fields: [driverId], references: [id])
+
+  @@map("driver_rewards")
+}
+
+// ─── PLATFORM CONFIG & GOVERNANCE ────────────────────────────
+
+// Admin-tunable business policy values, stored as key/value JSON.
+// Known keys: commission_percent, price_cap_per_km, full_refund_hours,
+// half_refund_hours, min_payout_npr, booking_expiry_minutes,
+// max_departure_days, min_departure_minutes
+model AppConfig {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("app_config")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String   @map("actor_id")
+  action     String
+  targetType String   @map("target_type")
+  targetId   String?  @map("target_id")
+  details    Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([actorId])
+  @@index([targetType, targetId])
+  @@map("audit_logs")
+}
+
+// ─── WALLET ──────────────────────────────────────────────────
+
+model Wallet {
+  id        String   @id @default(uuid())
+  userId    String   @unique @map("user_id")
+  balance   Float    @default(0)
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions WalletTransaction[]
+
+  @@map("wallets")
+}
+
+model WalletTransaction {
+  id        String       @id @default(uuid())
+  walletId  String       @map("wallet_id")
+  type      WalletTxType
+  amount    Float
+  source    String // e.g. refund, topup, payout, adjustment
+  reference String? // bookingId / paymentId / payoutId
+  note      String?
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@map("wallet_transactions")
+}
+
+// ─── SELF-SERVICE TOP-UP (online payment gateway) ────────────
+// Drivers top up their own wallet via an online payment provider
+// (eSewa for now). Money is credited ONLY after the backend verifies
+// the payment server-to-server against the provider — the client's
+// success callback is never trusted on its own.
+
+enum PaymentProvider {
+  esewa
+
+  @@map("payment_provider")
+}
+
+enum WalletTopupStatus {
+  initiated // intent created, provider form not yet completed
+  pending // returned from provider, awaiting server-side verification
+  completed // verified with provider + wallet credited (terminal)
+  failed // provider reported failure / verification mismatch (terminal)
+  expired // never completed within the allowed window (terminal)
+  refunded // was credited, then provider reported a refund → reversed (terminal)
+
+  @@map("wallet_topup_status")
+}
+
+model WalletTopup {
+  id       String          @id @default(uuid())
+  userId   String          @map("user_id")
+  provider PaymentProvider @default(esewa)
+
+  // Amount the driver asked to load (NPR). totalAmount is what the provider
+  // charges (== amount here; no tax/service charge on a wallet load) and is
+  // the value bound into the signature, so it can't be tampered mid-flight.
+  amount      Float
+  totalAmount Float @map("total_amount")
+
+  status WalletTopupStatus @default(initiated)
+
+  // Our idempotency key sent to the provider. Unique → the same intent can
+  // never be replayed to create a second credit.
+  transactionUuid String  @unique @map("transaction_uuid")
+  // Provider's own settlement reference (eSewa transaction_code / ref_id),
+  // populated on success. Unique → a provider ref can be credited at most once.
+  providerRef     String? @unique @map("provider_ref")
+
+  // The wallet_transaction id created when this top-up was credited. Its
+  // presence is the audit link proving the money movement happened exactly once.
+  creditedTxnId String? @map("credited_txn_id")
+
+  // Captured for fraud/audit traceability (never used for authz).
+  ipAddress String? @map("ip_address")
+
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  completedAt DateTime? @map("completed_at")
+
+  // G3 refund handling: the amount reversed by a compensating debit and when
+  // it was applied. Null until (and unless) the provider reports a refund.
+  refundedAmount Float?    @map("refunded_amount")
+  refundedAt     DateTime? @map("refunded_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@map("wallet_topups")
+}
+
+model FraudEvent {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  type      String // e.g. otp_lockout, refresh_reuse, gps_speed, rapid_cancellations
+  score     Int
+  details   Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@map("fraud_events")
+}
+
+// ─── IDEMPOTENCY ─────────────────────────────────────────────
+
+model IdempotencyKey {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  userId    String   @map("user_id")
+  endpoint  String
+  response  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("idempotency_keys")
+}
+
+// ─── SOS / SAFETY ────────────────────────────────────────────
+
+model SosAlert {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  bookingId  String?   @map("booking_id")
+  lat        Float
+  lng        Float
+  note       String?
+  status     SosStatus @default(open)
+  createdAt  DateTime  @default(now()) @map("created_at")
+  resolvedAt DateTime? @map("resolved_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@map("sos_alerts")
+}
