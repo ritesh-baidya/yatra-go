@@ -14,7 +14,7 @@ class PassengerProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFEFEFE), // Match background
+      backgroundColor: const Color(0xFFF9FAFB), // Changed to light gray for contrast
       body: SafeArea(
         bottom: false,
         child: SingleChildScrollView(
@@ -22,7 +22,7 @@ class PassengerProfilePage extends StatelessWidget {
           padding: EdgeInsets.only(
             left: 16,
             right: 16,
-            top: 20,
+            top: 24,
             bottom: MediaQuery.of(context).padding.bottom + 100, // Extra spacing for bottom nav bar
           ),
           child: Column(
@@ -66,7 +66,7 @@ class PassengerProfilePage extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 16,
               offset: const Offset(0, 4),
             ),
@@ -350,14 +350,14 @@ class PassengerProfilePage extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: Row(
           children: [
             // Car outline in red inside light red circle
@@ -375,33 +375,18 @@ class PassengerProfilePage extends StatelessWidget {
                 size: 24,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 16),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Switch to Driver Mode',
-                    style: GoogleFonts.inter(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF0F172A),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Start earning rides and more',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF64748B),
-                    ),
-                  ),
-                ],
+              child: Text(
+                'Driver Mode',
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF0F172A),
+                ),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
             // Solid Red Switch Button
             ElevatedButton(
               onPressed: () {

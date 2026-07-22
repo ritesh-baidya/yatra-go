@@ -308,7 +308,6 @@ class PassengerDashboardState extends State<PassengerDashboard>
   Widget _buildOtherTab(int index) {
     if (index == 1) return const PassengerMyBookingPage();
     if (index == 2) return const PassengerProfilePage();
-    if (index == 3) return const PassengerProfilePage();
     return const SizedBox.shrink();
   }
 

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'passenger_calling_driver_page.dart';
+import 'passenger_chat_detail_page.dart';
 
 class PassengerRateRiderPage extends StatefulWidget {
   const PassengerRateRiderPage({super.key});
@@ -341,9 +343,36 @@ class _PassengerRateRiderPageState extends State<PassengerRateRiderPage> {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildCircleActionButton(Icons.phone_rounded),
+              _buildCircleActionButton(
+                icon: Icons.phone_rounded,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PassengerCallingDriverPage(
+                        driverName: 'Sujan Thapa',
+                      ),
+                    ),
+                  );
+                },
+              ),
               const SizedBox(width: 10),
-              _buildCircleActionButton(Icons.chat_bubble_outline_rounded),
+              _buildCircleActionButton(
+                icon: Icons.chat_bubble_outline_rounded,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PassengerChatDetailPage(
+                        driverName: 'Sujan Thapa',
+                        avatarUrl: 'assets/images/sujan_thapa_avatar.png',
+                        initials: 'ST',
+                        isOnline: true,
+                      ),
+                    ),
+                  );
+                },
+              ),
             ],
           ),
         ],
@@ -351,18 +380,21 @@ class _PassengerRateRiderPageState extends State<PassengerRateRiderPage> {
     );
   }
 
-  Widget _buildCircleActionButton(IconData icon) {
-    return Container(
-      width: 42,
-      height: 42,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: const Color(0xFFFFD4D4), width: 1.5),
-      ),
-      child: Icon(
-        icon,
-        color: _redAccent,
-        size: 20,
+  Widget _buildCircleActionButton({required IconData icon, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: const Color(0xFFFFD4D4), width: 1.5),
+        ),
+        child: Icon(
+          icon,
+          color: _redAccent,
+          size: 20,
+        ),
       ),
     );
   }

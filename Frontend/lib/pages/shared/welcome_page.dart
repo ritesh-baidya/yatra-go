@@ -66,8 +66,21 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _onSendOtp() {
-    final phone =
-        _phoneController.text.isNotEmpty ? _phoneController.text : '98XXXXXXXX';
+    if (_phoneController.text.length != 10) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Please enter a valid 10-digit mobile number.',
+            style: GoogleFonts.inter(color: Colors.white),
+          ),
+          backgroundColor: const Color(0xFFE52020),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    final phone = _phoneController.text;
     Navigator.push(
       context,
       PageRouteBuilder(

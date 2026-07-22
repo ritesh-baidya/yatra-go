@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../widgets/passenger_bottom_nav_bar.dart';
-import 'passenger_incoming_call_page.dart';
+import 'passenger_calling_driver_page.dart';
 
 class PassengerChatDetailPage extends StatefulWidget {
   final String driverName;
@@ -361,9 +361,8 @@ class _PassengerChatDetailPageState extends State<PassengerChatDetailPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => PassengerIncomingCallPage(
+                      builder: (context) => PassengerCallingDriverPage(
                         driverName: widget.driverName,
-                        avatarAsset: 'assets/images/ram_kumar_avatar.png',
                       ),
                     ),
                   );

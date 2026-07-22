@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'passenger_cancel_booking_page.dart';
+import 'passenger_pickup_drop_page.dart';
 
 class PassengerEditRequestPage extends StatefulWidget {
   final Map<String, dynamic>? ride;
@@ -18,6 +19,8 @@ class _PassengerEditRequestPageState extends State<PassengerEditRequestPage> {
   late int _selectedSeats;
   late int _pricePerSeat;
   late int _couponDiscount;
+  late String _fromCity;
+  late String _toCity;
   final TextEditingController _couponController = TextEditingController(text: '');
 
   @override
@@ -27,6 +30,37 @@ class _PassengerEditRequestPageState extends State<PassengerEditRequestPage> {
     _selectedSeats = (rideData['bookedSeats'] ?? rideData['seats'] ?? 2) as int;
     _pricePerSeat = (rideData['price'] ?? 700) as int;
     _couponDiscount = 200;
+    _fromCity = (rideData['from'] ?? rideData['pickup'] ?? 'Gongabu, Kathmandu') as String;
+    _toCity = (rideData['to'] ?? rideData['dropoff'] ?? 'Lakeside, Pokhara') as String;
+  }
+
+  void _openLocationPage({required bool isPickup}) async {
+    final result = await Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => PassengerPickupDropPage(
+          initialPickup: _fromCity,
+          initialDropoff: _toCity,
+          focusOnPickup: isPickup,
+        ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          const begin = Offset(0.0, 1.0);
+          const end = Offset.zero;
+          const curve = Curves.easeInOutCubic;
+          var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+          return SlideTransition(
+            position: animation.drive(tween),
+            child: child,
+          );
+        },
+      ),
+    );
+    if (result != null && result is Map<String, dynamic>) {
+      setState(() {
+        _fromCity = result['pickup'] ?? _fromCity;
+        _toCity = result['dropoff'] ?? _toCity;
+      });
+    }
   }
 
   @override
@@ -484,10 +518,6 @@ class _PassengerEditRequestPageState extends State<PassengerEditRequestPage> {
   // 3. ROUTE DETAILS CARD
   // ════════════════════════════════════════════════════
   Widget _buildRouteCard() {
-    final rideData = widget.ride ?? {};
-    final pickup = rideData['from'] ?? 'Gongabu, Kathmandu';
-    final dropoff = rideData['to'] ?? 'Lakeside, Pokhara';
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
@@ -502,86 +532,109 @@ class _PassengerEditRequestPageState extends State<PassengerEditRequestPage> {
           ),
         ],
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
         children: [
-          // Timeline Column
-          Column(
-            children: [
-              const Icon(Icons.directions_walk_rounded, color: Color(0xFF0F172A), size: 18),
-              const SizedBox(height: 2),
-              Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFF22C55E), width: 2),
-                ),
-              ),
-              const SizedBox(height: 2),
-              SizedBox(
-                height: 20,
-                child: CustomPaint(
-                  painter: _VerticalDottedLinePainter(),
-                ),
-              ),
-              const SizedBox(height: 2),
-              const Icon(Icons.flag_outlined, color: Color(0xFF0F172A), size: 16),
-              const SizedBox(height: 2),
-              Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFE52020), width: 2),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(width: 14),
-          // Route Locations Column
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          // ─── Pickup Row (Tappable) ───
+          GestureDetector(
+            onTap: () => _openLocationPage(isPickup: true),
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(
-                  'PICKUP',
-                  style: GoogleFonts.inter(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF16A34A),
-                    letterSpacing: 0.5,
-                  ),
+                const Column(
+                  children: [
+                    Icon(
+                      Icons.directions_walk_rounded,
+                      color: Color(0xFF1E293B),
+                      size: 26,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  pickup,
-                  style: GoogleFonts.inter(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF0F172A),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  'DESTINATION',
-                  style: GoogleFonts.inter(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFFE52020),
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  dropoff,
-                  style: GoogleFonts.inter(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF0F172A),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'PICKUP',
+                        style: GoogleFonts.inter(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF16A34A),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _fromCity.isNotEmpty ? _fromCity : 'Select pickup location',
+                        style: GoogleFonts.inter(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF0F172A),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
                 ),
               ],
+            ),
+            ),
+          ),
+
+          const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
+
+          // ─── Destination Row (Tappable) ───
+          GestureDetector(
+            onTap: () => _openLocationPage(isPickup: false),
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Column(
+                  children: [
+                    Icon(
+                      Icons.sports_score_rounded,
+                      color: Color(0xFF1E293B),
+                      size: 26,
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'DESTINATION',
+                        style: GoogleFonts.inter(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFFE52020),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _toCity.isNotEmpty ? _toCity : 'Select destination location',
+                        style: GoogleFonts.inter(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF0F172A),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
             ),
           ),
         ],
@@ -1112,12 +1165,12 @@ class _PassengerEditRequestPageState extends State<PassengerEditRequestPage> {
                   Container(width: 1, height: 20, color: const Color(0xFFF1F5F9)),
                   _buildAmenityItem(
                     'No Smoking',
-                    customIcon: SizedBox(
+                    customIcon: const SizedBox(
                       width: 22,
                       height: 22,
                       child: Stack(
                         alignment: Alignment.center,
-                        children: const [
+                        children: [
                           Icon(
                             Icons.smoking_rooms_rounded,
                             color: Color(0xFF1E293B),
@@ -1279,34 +1332,6 @@ class _RedDivider extends StatelessWidget {
       ],
     );
   }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Vertical Dotted Line Painter
-// ─────────────────────────────────────────────────────────────────────────────
-class _VerticalDottedLinePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    const double dashHeight = 3;
-    const double dashGap = 3;
-    double startY = 0;
-    final paint = Paint()
-      ..color = const Color(0xFF0F172A)
-      ..strokeWidth = 2
-      ..strokeCap = StrokeCap.round;
-
-    while (startY < size.height) {
-      canvas.drawLine(
-        Offset(size.width / 2, startY),
-        Offset(size.width / 2, startY + dashHeight),
-        paint,
-      );
-      startY += dashHeight + dashGap;
-    }
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

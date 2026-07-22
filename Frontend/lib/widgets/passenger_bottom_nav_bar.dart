@@ -17,7 +17,6 @@ class PassengerBottomNavBar extends StatelessWidget {
   static const List<_NavItem> _items = [
     _NavItem(activeIcon: Icons.home, inactiveIcon: Icons.home_outlined, label: 'Home'),
     _NavItem(activeIcon: Icons.calendar_month, inactiveIcon: Icons.calendar_month_outlined, label: 'Bookings'),
-    _NavItem(activeIcon: Icons.chat_bubble, inactiveIcon: Icons.chat_bubble_outline_rounded, label: 'Chat'),
     _NavItem(activeIcon: Icons.person, inactiveIcon: Icons.person_outline_rounded, label: 'Profile'),
   ];
 

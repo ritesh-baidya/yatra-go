@@ -5,6 +5,7 @@ import 'passenger_chat_detail_page.dart';
 import 'passenger_edit_request_page.dart';
 import 'passenger_notification_page.dart';
 import 'passenger_ride_details_page.dart';
+import 'passenger_calling_driver_page.dart';
 
 class PassengerMyBookingPage extends StatefulWidget {
   const PassengerMyBookingPage({super.key});
@@ -134,13 +135,12 @@ class _PassengerMyBookingPageState extends State<PassengerMyBookingPage> {
             // ─── Header: Centered Title & Red Decorative Divider ───
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-              child: Stack(
-                alignment: Alignment.center,
+              child: Row(
                 children: [
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
+                  const SizedBox(width: 28), // Balance for centering
+                  Expanded(
+                    child: Center(
+                      child: Text(
                         'My Bookings',
                         style: GoogleFonts.inter(
                           fontSize: 24,
@@ -149,43 +149,38 @@ class _PassengerMyBookingPageState extends State<PassengerMyBookingPage> {
                           letterSpacing: -0.5,
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      const _RedDivider(),
-                    ],
+                    ),
                   ),
-                  Positioned(
-                    right: 4,
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const PassengerNotificationPage(),
-                          ),
-                        );
-                      },
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          const Icon(
-                            Icons.notifications_none_rounded,
-                            color: Color(0xFF111827),
-                            size: 28,
-                          ),
-                          Positioned(
-                            right: 2,
-                            top: 2,
-                            child: Container(
-                              width: 8,
-                              height: 8,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFE52020),
-                                shape: BoxShape.circle,
-                              ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PassengerNotificationPage(),
+                        ),
+                      );
+                    },
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        const Icon(
+                          Icons.notifications_none_rounded,
+                          color: Color(0xFF111827),
+                          size: 28,
+                        ),
+                        Positioned(
+                          right: 2,
+                          top: 2,
+                          child: Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFE52020),
+                              shape: BoxShape.circle,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -803,10 +798,12 @@ class _PassengerMyBookingPageState extends State<PassengerMyBookingPage> {
               Expanded(
                 child: InkWell(
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Calling ${ride['driverName']}...'),
-                        backgroundColor: const Color(0xFFE52020),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PassengerCallingDriverPage(
+                          driverName: ride['driverName'] ?? 'Ritesh',
+                        ),
                       ),
                     );
                   },
@@ -907,29 +904,6 @@ class _PassengerMyBookingPageState extends State<PassengerMyBookingPage> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  Confetti-like Red Diamond Divider
-// ─────────────────────────────────────────────────────────────────────────────
-class _RedDivider extends StatelessWidget {
-  const _RedDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(width: 52, height: 1.5, color: const Color(0xFFDC2626)),
-        const SizedBox(width: 6),
-        Transform.rotate(
-          angle: 0.7854,
-          child: Container(width: 8, height: 8, color: const Color(0xFFDC2626)),
-        ),
-        const SizedBox(width: 6),
-        Container(width: 52, height: 1.5, color: const Color(0xFFDC2626)),
-      ],
-    );
-  }
-}
 
 class _DashPainter extends CustomPainter {
   @override

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'passenger_cancel_booking_page.dart';
 import 'passenger_chat_detail_page.dart';
+import 'passenger_calling_driver_page.dart';
 
 // ═══════════════════════════════════════════
 // CUSTOM PAINTERS
@@ -294,10 +295,12 @@ class _PassengerRideDetailsPageState extends State<PassengerRideDetailsPage> {
                   icon: Icons.phone_outlined,
                   label: 'Call',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Calling ${widget.driverName}...'),
-                        backgroundColor: const Color(0xFFE52020),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PassengerCallingDriverPage(
+                          driverName: widget.driverName,
+                        ),
                       ),
                     );
                   },

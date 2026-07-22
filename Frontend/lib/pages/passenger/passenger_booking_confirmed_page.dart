@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'passenger_dashboard.dart';
 import 'passenger_chat_detail_page.dart';
+import 'passenger_calling_driver_page.dart';
 
 class BookingConfirmedPage extends StatelessWidget {
   const BookingConfirmedPage({super.key});
@@ -384,10 +385,12 @@ class _DriverCard extends StatelessWidget {
                 _CircleBtn(
                   icon: Icons.call_outlined,
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Calling Ramesh Thapa...'),
-                        backgroundColor: Color(0xFFDC2626),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const PassengerCallingDriverPage(
+                          driverName: 'Ramesh Thapa',
+                        ),
                       ),
                     );
                   },

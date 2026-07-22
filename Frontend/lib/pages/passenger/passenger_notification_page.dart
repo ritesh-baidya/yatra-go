@@ -127,7 +127,7 @@ class _PassengerNotificationPageState extends State<PassengerNotificationPage> {
                           ),
                           child: const Icon(
                             Icons.arrow_back,
-                            color: Color(0xFFC80A0A),
+                            color: Color(0xFF0F172A),
                             size: 20,
                           ),
                         ),
@@ -144,29 +144,8 @@ class _PassengerNotificationPageState extends State<PassengerNotificationPage> {
                                 style: GoogleFonts.inter(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w800,
-                                  color: const Color(0xFFC80A0A),
+                                  color: const Color(0xFF0F172A),
                                 ),
-                              ),
-                              const SizedBox(height: 6),
-                              // Decorative line: — ❖ —
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Container(width: 24, height: 1.5, color: const Color(0xFFC80A0A)),
-                                  const SizedBox(width: 6),
-                                  Transform.rotate(
-                                    angle: 45 * 3.14159 / 180,
-                                    child: Container(
-                                      width: 6,
-                                      height: 6,
-                                      decoration: BoxDecoration(
-                                        border: Border.all(color: const Color(0xFFC80A0A), width: 1.5),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Container(width: 24, height: 1.5, color: const Color(0xFFC80A0A)),
-                                ],
                               ),
                             ],
                           ),
@@ -211,7 +190,7 @@ class _PassengerNotificationPageState extends State<PassengerNotificationPage> {
                               children: [
                                 _buildNotificationItem(item),
                                 if (!isLast)
-                                  Divider(
+                                  const Divider(
                                     height: 1,
                                     thickness: 1,
                                     color: const Color(0xFFE2E8F0),
