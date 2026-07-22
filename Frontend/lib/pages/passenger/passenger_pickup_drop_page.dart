@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'passenger_select_destination_page.dart';
 
 class PassengerPickupDropPage extends StatefulWidget {
   final String initialPickup;
@@ -350,17 +351,30 @@ class _PassengerPickupDropPageState extends State<PassengerPickupDropPage> {
                 // Map button: show while editing or when address is empty while not editing
                 if (isEditing || (!isEditing && address.isEmpty)) ...[
                   GestureDetector(
-                    onTap: () {
-                      // TODO: Open map picker page
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Map picker coming soon', style: GoogleFonts.inter(fontSize: 13)),
-                          backgroundColor: const Color(0xFF0F172A),
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          duration: const Duration(seconds: 2),
+                    onTap: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PassengerSelectDestinationPage(
+                            isPickup: isPickup,
+                            initialAddress: isPickup ? _pickup : _dropoff,
+                          ),
                         ),
                       );
+                      if (result != null && result is Map<String, dynamic>) {
+                        setState(() {
+                          if (isPickup) {
+                            _pickup = result['fullAddress'] ?? result['title'] ?? '';
+                            _pickupSubtitle = result['address'] ?? '';
+                          } else {
+                            _dropoff = result['fullAddress'] ?? result['title'] ?? '';
+                            _dropoffSubtitle = result['address'] ?? '';
+                          }
+                          _editingField = null;
+                          _searchQuery = '';
+                          _searchController.clear();
+                        });
+                      }
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
