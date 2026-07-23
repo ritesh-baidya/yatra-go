@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import '../../widgets/live_map.dart';
+import '../../core/location_service.dart';
 
 class PassengerSelectDestinationPage extends StatefulWidget {
   final bool isPickup;
@@ -17,10 +21,15 @@ class PassengerSelectDestinationPage extends StatefulWidget {
 }
 
 class _PassengerSelectDestinationPageState extends State<PassengerSelectDestinationPage> {
-  Offset _mapOffset = Offset.zero;
-  Offset _pinOffset = Offset.zero;
+  final MapController _mapController = MapController();
   String _selectedTitle = 'Sunrise Cafe & Bakery';
   String _selectedSubtitle = 'Lazimpat, Kathmandu';
+
+  Future<void> _recenterOnUser() async {
+    final pos = await LocationService.instance.getCurrentPosition();
+    if (pos == null || !mounted) return;
+    _mapController.move(LatLng(pos.latitude, pos.longitude), 16);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,62 +37,20 @@ class _PassengerSelectDestinationPageState extends State<PassengerSelectDestinat
       backgroundColor: const Color(0xFFF4F5F7),
       body: Stack(
         children: [
-          // ─── 1. Map Canvas Background & Gestures ───
+          // ─── 1. Live Map Background (pans under the fixed center pin) ───
           Positioned.fill(
-            child: GestureDetector(
-              onPanUpdate: (details) {
-                setState(() {
-                  _mapOffset += details.delta;
-                });
-              },
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: CustomPaint(
-                      painter: _MapCanvasPainter(offset: _mapOffset),
-                    ),
-                  ),
-                  // Map Landmark Pins
-                  _buildMapLandmark(
-                    top: 140 + _mapOffset.dy,
-                    left: 230 + _mapOffset.dx,
-                    title: 'Green Palm Resort',
-                    isRed: true,
-                  ),
-                  _buildMapLandmark(
-                    top: 230 + _mapOffset.dy,
-                    left: 170 + _mapOffset.dx,
-                    title: 'Nepal Youth Society',
-                    isRed: false,
-                  ),
-                  _buildMapLandmark(
-                    top: 300 + _mapOffset.dy,
-                    left: 70 + _mapOffset.dx,
-                    title: 'Nawa Upakar Nepal\nRehabilitation Center',
-                    isRed: false,
-                  ),
-                  _buildMapLandmark(
-                    top: 480 + _mapOffset.dy,
-                    left: 260 + _mapOffset.dx,
-                    title: 'Saraswati\nGovernment\nSchool',
-                    isRed: false,
-                  ),
-                ],
-              ),
+            child: LiveMap(
+              controller: _mapController,
+              interactive: true,
+              showUserLocation: true,
+              zoom: 16,
             ),
           ),
 
-          // ─── 2. Center Pin & Callout Box Assembly (Moveable) ───
+          // ─── 2. Center Pin & Callout Box Assembly (fixed; map pans under it) ───
           Center(
-            child: Transform.translate(
-              offset: _pinOffset,
-              child: GestureDetector(
-                onPanUpdate: (details) {
-                  setState(() {
-                    _pinOffset += details.delta;
-                  });
-                },
-                child: Padding(
+            child: IgnorePointer(
+              child: Padding(
                   padding: const EdgeInsets.only(bottom: 110),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -196,7 +163,6 @@ class _PassengerSelectDestinationPageState extends State<PassengerSelectDestinat
             ),
           ),
         ),
-      ),
 
           // ─── 3. Top Header Bar ───
           SafeArea(
@@ -264,12 +230,7 @@ class _PassengerSelectDestinationPageState extends State<PassengerSelectDestinat
             right: 20,
             bottom: 325,
             child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  _mapOffset = Offset.zero;
-                  _pinOffset = Offset.zero;
-                });
-              },
+              onTap: _recenterOnUser,
               child: Container(
                 width: 48,
                 height: 48,
@@ -562,121 +523,6 @@ class _PassengerSelectDestinationPageState extends State<PassengerSelectDestinat
     );
   }
 
-  Widget _buildMapLandmark({
-    required double top,
-    required double left,
-    required String title,
-    required bool isRed,
-  }) {
-    return Positioned(
-      top: top,
-      left: left,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.location_on_rounded,
-            color: isRed ? const Color(0xFFE52020) : const Color(0xFF64748B),
-            size: 18,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            title,
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              fontWeight: isRed ? FontWeight.w700 : FontWeight.w600,
-              color: isRed ? const Color(0xFFE52020) : const Color(0xFF334155),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Custom Painter for Light Vector Map ───
-class _MapCanvasPainter extends CustomPainter {
-  final Offset offset;
-
-  _MapCanvasPainter({required this.offset});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final bgPaint = Paint()..color = const Color(0xFFF4F5F7);
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), bgPaint);
-
-    final roadPaint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 14
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final thinRoadPaint = Paint()
-      ..color = const Color(0xFFEBECEF)
-      ..strokeWidth = 6
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    final buildingPaint = Paint()
-      ..color = const Color(0xFFEAEAED).withValues(alpha: 0.6)
-      ..style = PaintingStyle.fill;
-
-    canvas.save();
-    canvas.translate(offset.dx, offset.dy);
-
-    // Draw building block shapes
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-          const Rect.fromLTWH(40, 100, 100, 70), const Radius.circular(8)),
-      buildingPaint,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-          const Rect.fromLTWH(180, 80, 80, 120), const Radius.circular(8)),
-      buildingPaint,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-          const Rect.fromLTWH(60, 260, 120, 90), const Radius.circular(8)),
-      buildingPaint,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-          const Rect.fromLTWH(220, 240, 90, 140), const Radius.circular(8)),
-      buildingPaint,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-          const Rect.fromLTWH(80, 420, 140, 100), const Radius.circular(8)),
-      buildingPaint,
-    );
-
-    // Draw Main Roads
-    final mainRoadPath = Path()
-      ..moveTo(-50, 120)
-      ..cubicTo(100, 180, 250, 60, 420, 140)
-      ..cubicTo(320, 300, 200, 450, 150, 600);
-    canvas.drawPath(mainRoadPath, roadPaint);
-
-    final branchRoadPath = Path()
-      ..moveTo(220, 110)
-      ..quadraticBezierTo(200, 300, 380, 420)
-      ..quadraticBezierTo(100, 500, -20, 480);
-    canvas.drawPath(branchRoadPath, roadPaint);
-
-    // Draw Secondary Roads
-    final secPath = Path()
-      ..moveTo(80, -20)
-      ..lineTo(140, 350)
-      ..lineTo(350, 320);
-    canvas.drawPath(secPath, thinRoadPaint);
-
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(covariant _MapCanvasPainter oldDelegate) =>
-      oldDelegate.offset != offset;
 }
 
 // ─── Dashed Line Painter ───

@@ -21,6 +21,10 @@ class LiveMap extends StatefulWidget {
   /// Optional polyline route drawn between points.
   final List<LatLng> route;
 
+  /// Optional external controller so the parent can drive the map
+  /// (e.g. a recenter button). When null, an internal one is used.
+  final MapController? controller;
+
   const LiveMap({
     super.key,
     this.center,
@@ -29,6 +33,7 @@ class LiveMap extends StatefulWidget {
     this.showUserLocation = false,
     this.markers = const [],
     this.route = const [],
+    this.controller,
   });
 
   /// Kathmandu — the app's default map focus when no location is known.
@@ -39,7 +44,7 @@ class LiveMap extends StatefulWidget {
 }
 
 class _LiveMapState extends State<LiveMap> {
-  final MapController _controller = MapController();
+  late final MapController _controller = widget.controller ?? MapController();
   LatLng? _userLocation;
 
   @override
