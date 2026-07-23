@@ -25,6 +25,15 @@ class LiveMap extends StatefulWidget {
   /// (e.g. a recenter button). When null, an internal one is used.
   final MapController? controller;
 
+  /// Called as the map camera moves; reports the current center.
+  final void Function(LatLng center)? onCenterChanged;
+
+  /// Called when the user taps the map at [point].
+  final void Function(LatLng point)? onTap;
+
+  /// Called once the device GPS fix is resolved (when [showUserLocation]).
+  final void Function(LatLng location)? onUserLocationResolved;
+
   const LiveMap({
     super.key,
     this.center,
@@ -34,6 +43,9 @@ class LiveMap extends StatefulWidget {
     this.markers = const [],
     this.route = const [],
     this.controller,
+    this.onCenterChanged,
+    this.onTap,
+    this.onUserLocationResolved,
   });
 
   /// Kathmandu — the app's default map focus when no location is known.
@@ -61,6 +73,7 @@ class _LiveMapState extends State<LiveMap> {
     final here = LatLng(pos.latitude, pos.longitude);
     setState(() => _userLocation = here);
     _controller.move(here, widget.zoom);
+    widget.onUserLocationResolved?.call(here);
   }
 
   @override
@@ -78,6 +91,12 @@ class _LiveMapState extends State<LiveMap> {
         initialCenter: initialCenter,
         initialZoom: widget.zoom,
         interactionOptions: interactionOptions,
+        onPositionChanged: (camera, hasGesture) {
+          widget.onCenterChanged?.call(camera.center);
+        },
+        onTap: (tapPosition, point) {
+          widget.onTap?.call(point);
+        },
       ),
       children: [
         TileLayer(

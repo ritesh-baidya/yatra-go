@@ -1,8 +1,13 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import '../../widgets/live_map.dart';
+import '../../core/location_service.dart';
+import '../../core/geocoding_service.dart';
 import '../../widgets/passenger_bottom_nav_bar.dart';
 import 'passenger_notification_page.dart';
 import 'passenger_my_booking_page.dart';
@@ -27,6 +32,10 @@ class PassengerDashboardState extends State<PassengerDashboard>
   bool _showSearchCard = true;
   DateTime? _lastBackPressTime;
 
+  // ─── Map-driven pickup selection ───
+  final MapController _mapController = MapController();
+  Timer? _geocodeDebounce;
+
   void setTabIndex(int index) {
     setState(() {
       _currentTabIndex = index;
@@ -48,7 +57,42 @@ class PassengerDashboardState extends State<PassengerDashboard>
   @override
   void dispose() {
     _sheetController.dispose();
+    _geocodeDebounce?.cancel();
     super.dispose();
+  }
+
+  // ─── Map pickup handlers ───
+
+  /// The map center is the pickup point. Track it live and reverse-geocode
+  /// once movement settles (debounced to respect Nominatim's rate limit).
+  void _onMapCenterChanged(LatLng center) {
+    _geocodeDebounce?.cancel();
+    _geocodeDebounce = Timer(
+      const Duration(milliseconds: 700),
+      () => _reverseGeocodePickup(center),
+    );
+  }
+
+  Future<void> _reverseGeocodePickup(LatLng point) async {
+    final label = await GeocodingService.instance.reverse(point);
+    if (label == null || !mounted) return;
+    setState(() => _fromCity = label);
+  }
+
+  /// Default pickup = the device's current location on first fix.
+  void _onUserLocationResolved(LatLng here) {
+    _reverseGeocodePickup(here);
+  }
+
+  Future<void> _recenterOnUser() async {
+    final pos = await LocationService.instance.getCurrentPosition();
+    if (pos == null || !mounted) return;
+    _mapController.move(LatLng(pos.latitude, pos.longitude), 16);
+  }
+
+  void _zoomBy(double delta) {
+    final camera = _mapController.camera;
+    _mapController.move(camera.center, camera.zoom + delta);
   }
 
   String _fromCity = 'Saraswati Government School';
@@ -315,9 +359,18 @@ class PassengerDashboardState extends State<PassengerDashboard>
   Widget _buildDashboardHome() {
     return Stack(
       children: [
-        // ─── Map Background ───
-        const Positioned.fill(
-          child: LiveMap(showUserLocation: true),
+        // ─── Interactive Map (center = pickup; pan or tap to change) ───
+        Positioned.fill(
+          child: LiveMap(
+            controller: _mapController,
+            interactive: true,
+            showUserLocation: true,
+            zoom: 16,
+            onCenterChanged: _onMapCenterChanged,
+            onTap: (point) =>
+                _mapController.move(point, _mapController.camera.zoom),
+            onUserLocationResolved: _onUserLocationResolved,
+          ),
         ),
 
         // ─── Blue location marker with glowing aura ring ───
@@ -449,9 +502,7 @@ class PassengerDashboardState extends State<PassengerDashboard>
                       color: Color(0xFF0F172A),
                       size: 20,
                     ),
-                    onPressed: () {
-                      // Recenter action
-                    },
+                    onPressed: _recenterOnUser,
                   ),
                 ),
               ),
@@ -475,9 +526,7 @@ class PassengerDashboardState extends State<PassengerDashboard>
                   children: [
                     IconButton(
                       icon: const Icon(Icons.add_rounded, color: Color(0xFF0F172A), size: 20),
-                      onPressed: () {
-                        // Zoom in action
-                      },
+                      onPressed: () => _zoomBy(1),
                     ),
                     Container(
                       width: 24,
@@ -486,9 +535,7 @@ class PassengerDashboardState extends State<PassengerDashboard>
                     ),
                     IconButton(
                       icon: const Icon(Icons.remove_rounded, color: Color(0xFF0F172A), size: 20),
-                      onPressed: () {
-                        // Zoom out action
-                      },
+                      onPressed: () => _zoomBy(-1),
                     ),
                   ],
                 ),
