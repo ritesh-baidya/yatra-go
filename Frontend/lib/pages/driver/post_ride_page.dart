@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../theme/yatri_theme.dart';
+import '../../widgets/live_map.dart';
 
 class PostRidePage extends StatefulWidget {
   const PostRidePage({super.key});
@@ -143,12 +144,9 @@ class _PostRidePageState extends State<PostRidePage> {
         borderRadius: BorderRadius.circular(18),
         child: Stack(
           children: [
-            // Map Image Background
-            Positioned.fill(
-              child: Image.asset(
-                'assets/images/map_route.png',
-                fit: BoxFit.cover,
-              ),
+            // Map Background
+            const Positioned.fill(
+              child: LiveMap(),
             ),
 
             // Kathmandu (Start) Label

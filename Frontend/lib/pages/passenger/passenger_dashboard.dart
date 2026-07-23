@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import '../../widgets/live_map.dart';
 import '../../widgets/passenger_bottom_nav_bar.dart';
 import 'passenger_notification_page.dart';
 import 'passenger_my_booking_page.dart';
@@ -315,11 +316,8 @@ class PassengerDashboardState extends State<PassengerDashboard>
     return Stack(
       children: [
         // ─── Map Background ───
-        Positioned.fill(
-          child: Image.asset(
-            'assets/images/passenger_map_route.png',
-            fit: BoxFit.cover,
-          ),
+        const Positioned.fill(
+          child: LiveMap(showUserLocation: true),
         ),
 
         // ─── Blue location marker with glowing aura ring ───
