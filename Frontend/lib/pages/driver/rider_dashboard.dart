@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../widgets/bottom_nav_bar.dart';
+import '../../widgets/live_map.dart';
 import 'rider_notification_page.dart';
 import 'post_ride_page.dart';
 import 'rider_profile_page.dart';
@@ -831,10 +832,7 @@ class _RiderDashboardState extends State<RiderDashboard> {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(15),
-                  child: Image.asset(
-                    'assets/images/map_route.png',
-                    fit: BoxFit.cover,
-                  ),
+                  child: const LiveMap(),
                 ),
               ),
             ],

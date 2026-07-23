@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/yatri_theme.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'live_map.dart';
 
 class UpcomingRideCard extends StatelessWidget {
   const UpcomingRideCard({super.key});
@@ -206,10 +207,7 @@ class UpcomingRideCard extends StatelessWidget {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(15),
-                    child: Image.asset(
-                      'assets/images/map_route.png',
-                      fit: BoxFit.cover,
-                    ),
+                    child: const LiveMap(),
                   ),
                 ),
               ],
